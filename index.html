@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>To‑Do List — Clean & Attractive</title>
+  <style>
+    :root {
+      --bg1: 255, 115, 179; /* pink */
+      --bg2: 99, 102, 241;  /* indigo */
+      --card: 255, 255, 255;
+      --muted: 120, 120, 140;
+      --text: 20, 23, 31;
+      --ring: 59, 130, 246; /* blue-500 */
+      --shadow: 0 20px 40px rgba(0,0,0,.15);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      color: rgb(var(--text));
+      background: radial-gradient(1200px 800px at 15% 10%, rgba(var(--bg1), .25), transparent),
+                  radial-gradient(1000px 600px at 85% 20%, rgba(var(--bg2), .25), transparent),
+                  linear-gradient(135deg, rgba(255,255,255,1), rgba(245,248,255,1));
+      display: grid;
+      place-items: center;
+      padding: 32px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      background: rgba(var(--card), .65);
+      border: 1px solid rgba(255,255,255,.6);
+      backdrop-filter: blur(10px) saturate(1.2);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      animation: floatIn .6s ease-out;
+    }
+
+    @keyframes floatIn { from { transform: translateY(10px); opacity: 0 } to { transform: translateY(0); opacity: 1 } }
+
+    .header {
+      padding: 28px 28px 18px;
+      border-bottom: 1px solid rgba(0,0,0,.06);
+      background: linear-gradient(180deg, rgba(255,255,255,.7), rgba(255,255,255,.5));
+    }
+    .title {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 28px);
+      letter-spacing: .3px;
+    }
+    .subtitle {
+      margin: 6px 0 0;
+      color: rgba(var(--muted), .95);
+      font-size: 14px;
+    }
+
+    .controls { display: grid; gap: 10px; grid-template-columns: 1fr max-content max-content; margin-top: 14px; }
+    .input, .date, .btn {
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(0,0,0,.08);
+      padding: 0 14px;
+      font-size: 16px;
+      outline: none;
+      transition: box-shadow .15s ease, transform .05s ease;
+      background: rgba(255,255,255,.9);
+    }
+    .input:focus, .date:focus { box-shadow: 0 0 0 4px rgba(var(--ring), .15); }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 10px;
+      padding: 0 16px; cursor: pointer; border: none; font-weight: 600;
+      background: linear-gradient(135deg, rgba(var(--bg2), .95), rgba(var(--bg1), .95));
+      color: white;
+    }
+    .btn:active { transform: translateY(1px); }
+
+    .content { padding: 18px 18px 22px; }
+
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; margin: 8px 6px 14px; }
+    .chip {
+      padding: 8px 12px; border-radius: 999px; font-size: 13px; cursor: pointer;
+      border: 1px solid rgba(0,0,0,.08); background: rgba(255,255,255,.8);
+      color: rgba(var(--muted), 1);
+      transition: background .15s ease, color .15s ease, box-shadow .15s ease;
+    }
+    .chip.active { background: rgba(var(--bg2), .1); color: rgb(var(--text)); box-shadow: inset 0 0 0 1px rgba(var(--bg2), .25); }
+
+    .list { list-style: none; margin: 0; padding: 0; }
+
+    .empty {
+      text-align: center; color: rgba(var(--muted), .95); padding: 28px 10px;
+      border: 2px dashed rgba(0,0,0,.06); border-radius: 16px; background: rgba(255,255,255,.6);
+    }
+
+    .item {
+      display: grid; grid-template-columns: 28px 1fr max-content; align-items: center; gap: 12px;
+      padding: 12px; border-radius: 14px; border: 1px solid rgba(0,0,0,.06);
+      background: rgba(255,255,255,.85); margin: 8px 0; transition: transform .08s ease, background .2s ease;
+    }
+    .item:hover { transform: translateY(-1px); }
+    .item.completed { opacity: .85; background: rgba(245, 247, 252, .9); }
+
+    .check {
+      --size: 20px; width: var(--size); height: var(--size); border-radius: 6px;
+      border: 2px solid rgba(0,0,0,.25); display: grid; place-items: center; cursor: pointer;
+      transition: background .15s ease, border-color .15s ease, box-shadow .15s ease;
+    }
+    .check input { display: none; }
+    .check svg { width: 14px; height: 14px; opacity: 0; transform: scale(.8); transition: opacity .15s ease, transform .15s ease; }
+    .check.active { background: linear-gradient(135deg, rgba(var(--bg2), 1), rgba(var(--bg1), 1)); border-color: transparent; box-shadow: 0 0 0 4px rgba(var(--ring), .15); }
+    .check.active svg { opacity: 1; transform: scale(1); filter: drop-shadow(0 1px 0 rgba(0,0,0,.2)); }
+
+    .text {
+      font-size: 16px; line-height: 1.4; padding: 6px 10px; border-radius: 8px; outline: none; min-width: 40px;
+      transition: background .15s ease, box-shadow .15s ease;
+    }
+    .text[contenteditable="true"] { background: rgba(0,0,0,.03); box-shadow: inset 0 0 0 2px rgba(var(--ring), .1); }
+    .completed .text { text-decoration: line-through; color: rgba(var(--muted), 1); }
+
+    .meta { display: flex; gap: 12px; align-items: center; color: rgba(var(--muted), 1); font-size: 12px; }
+    .due { padding: 4px 8px; border-radius: 999px; background: rgba(0,0,0,.05); }
+
+    .actions { display: flex; align-items: center; gap: 6px; }
+    .icon-btn { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid rgba(0,0,0,.08); background: white; border-radius: 10px; cursor: pointer; }
+    .icon-btn:hover { box-shadow: 0 0 0 4px rgba(var(--ring), .12); }
+
+    .footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; margin-top: 6px; border-top: 1px dashed rgba(0,0,0,.08); color: rgba(var(--muted), 1); }
+    .tiny { font-size: 12px; }
+    .link { color: rgb(16, 112, 225); text-decoration: none; }
+  </style>
+</head>
+<body>
+  <main class="app" aria-label="To‑Do List">
+    <header class="header">
+      <h1 class="title">✔️ To‑Do List</h1>
+      <p class="subtitle" id="dateLabel"></p>
+
+      <form id="todoForm" class="controls" autocomplete="off">
+        <input id="taskInput" class="input" type="text" placeholder="Add a task… (e.g., Submit assignment)" aria-label="Task" required maxlength="120" />
+        <input id="dateInput" class="date" type="date" aria-label="Due date" />
+        <button class="btn" type="submit" aria-label="Add task">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M12 4v16M4 12h16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          Add
+        </button>
+      </form>
+    </header>
+
+    <section class="content">
+      <div class="filters" role="tablist" aria-label="Filter tasks">
+        <button class="chip active" data-filter="all" role="tab" aria-selected="true">All</button>
+        <button class="chip" data-filter="active" role="tab" aria-selected="false">Active</button>
+        <button class="chip" data-filter="completed" role="tab" aria-selected="false">Completed</button>
+      </div>
+
+      <ul id="list" class="list" aria-live="polite"></ul>
+
+      <div class="footer">
+        <span class="tiny" id="count"></span>
+        <button id="clearCompleted" class="chip" type="button">Clear completed</button>
+      </div>
+    </section>
+  </main>
+
+  <template id="itemTpl">
+    <li class="item" draggable="false">
+      <button class="check" aria-label="Toggle complete" title="Mark complete">
+        <input type="checkbox" />
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7L9 18l-5-5" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>
+
+      <div>
+        <div class="text" role="textbox" aria-label="Task text" contenteditable="false"></div>
+        <div class="meta">
+          <span class="due"></span>
+          <span class="created tiny"></span>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="icon-btn edit" aria-label="Edit task" title="Edit">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 20h4l10-10-4-4L4 16v4zM14 6l4 4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="icon-btn delete" aria-label="Delete task" title="Delete">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7l1-2h4l1 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
+    </li>
+  </template>
+
+  <script>
+    // --- State ---
+    const state = {
+      tasks: [],
+      filter: 'all',
+    };
+
+    // --- Elements ---
+    const form = document.getElementById('todoForm');
+    const taskInput = document.getElementById('taskInput');
+    const dateInput = document.getElementById('dateInput');
+    const list = document.getElementById('list');
+    const count = document.getElementById('count');
+    const clearCompletedBtn = document.getElementById('clearCompleted');
+
+    // --- Utilities ---
+    const uid = () => Math.random().toString(36).slice(2) + Date.now().toString(36);
+    const save = () => localStorage.setItem('todo.tasks', JSON.stringify(state.tasks));
+    const load = () => { try { return JSON.parse(localStorage.getItem('todo.tasks')) || [] } catch { return [] } };
+    const fmtDate = (d) => new Date(d).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+    const setDateLabel = () => {
+      const now = new Date();
+      const nice = now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+      document.getElementById('dateLabel').textContent = `Today is ${nice}`;
+    };
+
+    // --- Rendering ---
+    function render() {
+      list.innerHTML = '';
+      const filtered = state.tasks.filter(t => {
+        if (state.filter === 'active') return !t.completed;
+        if (state.filter === 'completed') return t.completed;
+        return true;
+      });
+
+      if (!filtered.length) {
+        const div = document.createElement('div');
+        div.className = 'empty';
+        div.textContent = 'No tasks here yet — add one above!';
+        list.appendChild(div);
+      } else {
+        for (const t of filtered.sort((a,b) => Number(a.completed) - Number(b.completed))) {
+          list.appendChild(renderItem(t));
+        }
+      }
+
+      const activeCount = state.tasks.filter(t => !t.completed).length;
+      count.textContent = `${activeCount} task${activeCount !== 1 ? 's' : ''} remaining`;
+    }
+
+    function renderItem(task) {
+      const tpl = document.getElementById('itemTpl');
+      const node = tpl.content.firstElementChild.cloneNode(true);
+      node.dataset.id = task.id;
+      if (task.completed) node.classList.add('completed');
+
+      // checkbox
+      const check = node.querySelector('.check');
+      const checkbox = check.querySelector('input');
+      checkbox.checked = task.completed;
+      check.classList.toggle('active', task.completed);
+      check.addEventListener('click', () => toggleComplete(task.id));
+
+      // text
+      const text = node.querySelector('.text');
+      text.textContent = task.text;
+
+      // dates
+      const due = node.querySelector('.due');
+      due.textContent = task.dueDate ? `Due · ${fmtDate(task.dueDate)}` : '';
+      const created = node.querySelector('.created');
+      created.textContent = `Added ${fmtDate(task.createdAt)}`;
+
+      // buttons
+      node.querySelector('.delete').addEventListener('click', () => removeTask(task.id));
+      const editBtn = node.querySelector('.edit');
+      editBtn.addEventListener('click', () => enableEdit(node, task));
+
+      return node;
+    }
+
+    // --- Actions ---
+    function addTask(text, dueDate) {
+      state.tasks.push({ id: uid(), text, completed: false, createdAt: Date.now(), dueDate: dueDate || null });
+      save();
+      render();
+    }
+
+    function toggleComplete(id) {
+      const t = state.tasks.find(x => x.id === id);
+      if (!t) return;
+      t.completed = !t.completed;
+      save();
+      render();
+    }
+
+    function removeTask(id) {
+      state.tasks = state.tasks.filter(x => x.id !== id);
+      save();
+      render();
+    }
+
+    function enableEdit(node, task) {
+      const el = node.querySelector('.text');
+      el.setAttribute('contenteditable', 'true');
+      el.focus();
+      placeCaretAtEnd(el);
+
+      function finish(commit) {
+        el.setAttribute('contenteditable', 'false');
+        if (commit) {
+          const val = el.textContent.trim();
+          if (val) task.text = val; else el.textContent = task.text; // keep old if empty
+          save();
+          render();
+        }
+        el.removeEventListener('keydown', onKey);
+        el.removeEventListener('blur', onBlur);
+      }
+      function onKey(e) {
+        if (e.key === 'Enter') { e.preventDefault(); finish(true); }
+        if (e.key === 'Escape') { e.preventDefault(); finish(false); }
+      }
+      function onBlur() { finish(true); }
+      el.addEventListener('keydown', onKey);
+      el.addEventListener('blur', onBlur);
+    }
+
+    function placeCaretAtEnd(el) {
+      const range = document.createRange();
+      const sel = window.getSelection();
+      range.selectNodeContents(el);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
+
+    // --- Events ---
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const text = taskInput.value.trim();
+      if (!text) { taskInput.focus(); return; }
+      const due = dateInput.value ? new Date(dateInput.value).toISOString() : null;
+      addTask(text, due);
+      form.reset();
+      taskInput.focus();
+    });
+
+    document.querySelectorAll('.filters .chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        state.filter = chip.dataset.filter;
+        document.querySelectorAll('.filters .chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        render();
+      });
+    });
+
+    clearCompletedBtn.addEventListener('click', () => {
+      const hadCompleted = state.tasks.some(t => t.completed);
+      state.tasks = state.tasks.filter(t => !t.completed);
+      save();
+      render();
+      if (!hadCompleted) {
+        clearCompletedBtn.textContent = 'No completed tasks';
+        setTimeout(() => clearCompletedBtn.textContent = 'Clear completed', 1200);
+      }
+    });
+
+    // --- Init ---
+    (function init(){
+      setDateLabel();
+      state.tasks = load();
+      render();
+    })();
+  </script>
+</body>
+</html>
